@@ -16,6 +16,7 @@ const (
 
 func main() {
 	fmt.Println("Running server..")
+
 	server, err := net.Listen(SERVER_TYPE, SERVER_HOST+":"+SERVER_PORT)
 	checkErr(err)
 
@@ -34,13 +35,16 @@ func main() {
 func processClient(connection net.Conn) {
 	buffer := make([]byte, 1024)
 	_, err := connection.Read(buffer)
+
 	fileName := requestParse(buffer)
 	if (fileName == "/") {
-		fileName = "index.html"
+		fileName = "/index.html"
 	}
-	page := loadHTML("htdocs/" + fileName)
+
+	page := loadHTML("htdocs" + fileName)
 	_, err = connection.Write([]byte("HTTP/1.1 200 OK\n\n" + page))
 	checkErr(err)
+
 	connection.Close()
 }
 
