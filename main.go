@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"errors"
 )
 
 const (
@@ -41,18 +42,25 @@ func processClient(connection net.Conn) {
 		fileName = "/index.html"
 	}
 
-	page := loadHTML("htdocs" + fileName)
-	_, err = connection.Write([]byte("HTTP/1.1 200 OK\n\n" + page))
-	checkErr(err)
+	page, err := loadHTML("htdocs" + fileName)
+	if err != nil {
+		_, err = connection.Write([]byte("HTTP/1.0 404 NOT FOUND\n\nFile Not Found"))
+		checkErr(err)
+	} else {
+		_, err = connection.Write([]byte("HTTP/1.1 200 OK\n\n" + page))
+		checkErr(err)
+	}
 
 	connection.Close()
 }
 
-func loadHTML(path string) string {
+func loadHTML(path string) (string, error) {
 	dat, err := os.ReadFile(path)
+	if err != nil {
+		return "", errors.New("File not found.")
+	}
 	html := string(dat[:])
-	checkErr(err)
-	return html
+	return html, nil
 }
 
 func requestParse(request []byte) string {
