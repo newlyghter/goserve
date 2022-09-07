@@ -7,23 +7,22 @@ import (
 	"os"
 	"strings"
 	"errors"
-)
-
-const (
-	SERVER_HOST = "localhost"
-	SERVER_PORT = "8080"
-	SERVER_TYPE = "tcp"
+	"flag"
 )
 
 func main() {
 	fmt.Println("Running server..")
 
-	server, err := net.Listen(SERVER_TYPE, SERVER_HOST+":"+SERVER_PORT)
+	SERVER_HOST := flag.String("host", "localhost", "IP for the server.")
+	SERVER_PORT := flag.String("port", "8080", "Port number for the server.")
+	flag.Parse()
+
+	server, err := net.Listen("tcp", *SERVER_HOST+":"+*SERVER_PORT)
 	checkErr(err)
 
 	defer server.Close()
 
-	fmt.Println("Listening on: " + SERVER_HOST + ":" + SERVER_PORT)
+	fmt.Println("Listening on: " + *SERVER_HOST + ":" + *SERVER_PORT)
 	
 	for {
 		connection, err := server.Accept()
