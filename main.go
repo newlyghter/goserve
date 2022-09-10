@@ -43,11 +43,9 @@ func processClient(connection net.Conn) {
 
 	page, err := loadHTML("htdocs" + fileName)
 	if err != nil {
-		_, err = connection.Write([]byte("HTTP/1.0 404 NOT FOUND\n\nFile Not Found"))
-		checkErr(err)
+		respond(404, connection, "File not found.")
 	} else {
-		_, err = connection.Write([]byte("HTTP/1.1 200 OK\n\n" + page))
-		checkErr(err)
+		respond(200, connection, page)
 	}
 
 	connection.Close()
@@ -67,6 +65,17 @@ func requestParse(request []byte) string {
 	headers := strings.Split(header, "\n")
 	fileName := strings.Split(headers[0], " ")[1]
 	return fileName
+}
+
+func respond(code int, connection net.Conn, message string) {
+	switch code {
+	case 200:
+		_, err := connection.Write([]byte("HTTP/1.0 200 OK\n\n" + message))
+		checkErr(err)
+	case 404:
+		_, err := connection.Write([]byte("HTTP/1.0 404 NOT FOUND\n\n" + message))
+		checkErr(err)
+	}
 }
 
 func checkErr(err error) {
