@@ -35,13 +35,13 @@ func main() {
 func processClient(connection net.Conn) {
 	buffer := make([]byte, 1024)
 	_, err := connection.Read(buffer)
+	checkErr(err)
 
 	fileName := requestParse(buffer)
-	if (fileName == "/") {
-		fileName = "/index.html"
-	}
+	path, err := os.Getwd()
+	checkErr(err)
 
-	page, err := loadHTML("htdocs" + fileName)
+	page, err := loadHTML(path + fileName)
 	if err != nil {
 		respond(404, connection, "File not found.")
 	} else {
@@ -64,7 +64,11 @@ func requestParse(request []byte) string {
 	header := string(request[:])
 	headers := strings.Split(header, "\n")
 	fileName := strings.Split(headers[0], " ")[1]
-	return fileName
+	if (fileName == "/") {
+		return "/index.html"
+	} else {
+		return fileName
+	}
 }
 
 func respond(code int, connection net.Conn, message string) {
