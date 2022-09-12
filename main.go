@@ -11,13 +11,13 @@ import (
 )
 
 func main() {
-	fmt.Println("Running server..")
-
 	SERVER_HOST := flag.String("host", "localhost", "IP for the server.")
 	SERVER_PORT := flag.String("port", "8080", "Port number for the server.")
 	flag.Parse()
 
-	server, err := net.Listen("tcp", *SERVER_HOST+":"+*SERVER_PORT)
+	fmt.Println("Running server..")
+
+	server, err := net.Listen("tcp", *SERVER_HOST + ":" + *SERVER_PORT)
 	checkErr(err)
 
 	defer server.Close()
@@ -37,13 +37,13 @@ func processClient(connection net.Conn) {
 	_, err := connection.Read(buffer)
 	checkErr(err)
 
-	fileName := requestParse(buffer)
+	fileName := parseRequest(buffer)
 	path, err := os.Getwd()
 	checkErr(err)
 
 	page, err := loadHTML(path + fileName)
 	if err != nil {
-		respond(404, connection, "File not found.")
+		respond(404, connection, err.Error())
 	} else {
 		respond(200, connection, page)
 	}
@@ -60,7 +60,7 @@ func loadHTML(path string) (string, error) {
 	return html, nil
 }
 
-func requestParse(request []byte) string {
+func parseRequest(request []byte) string {
 	header := string(request[:])
 	headers := strings.Split(header, "\n")
 	fileName := strings.Split(headers[0], " ")[1]
