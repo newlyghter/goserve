@@ -8,6 +8,8 @@ import (
 	"strings"
 	"errors"
 	"flag"
+
+	"golang.org/x/exp/slices"
 )
 
 func main() {
@@ -43,15 +45,24 @@ func processClient(connection net.Conn) {
 
 	page, err := loadHTML(path + fileName)
 	if err != nil {
-		respond(404, connection, err.Error())
+		if err.Error() == "File not found." {
+			respond(404, connection, err.Error())
+		} else if err.Error() == "Bad request." {
+			respond(400, connection, err.Error())
+		}
 	} else {
 		respond(200, connection, page)
 	}
 
-	connection.Close()
+	defer connection.Close()
 }
 
 func loadHTML(path string) (string, error) {
+	allowed := []string{"html", "css", "js"}
+	extension := strings.Split(path, ".")[1]
+	if !slices.Contains(allowed, extension) {
+		return "", errors.New("Bad request.")
+	}
 	dat, err := os.ReadFile(path)
 	if err != nil {
 		return "", errors.New("File not found.")
@@ -74,10 +85,13 @@ func parseRequest(request []byte) string {
 func respond(code int, connection net.Conn, message string) {
 	switch code {
 	case 200:
-		_, err := connection.Write([]byte("HTTP/1.0 200 OK\n\n" + message))
+		_, err := connection.Write([]byte("HTTP/1.1 200 OK\n\n" + message))
 		checkErr(err)
 	case 404:
-		_, err := connection.Write([]byte("HTTP/1.0 404 NOT FOUND\n\n" + message))
+		_, err := connection.Write([]byte("HTTP/1.1 404 NOT FOUND\n\n" + message))
+		checkErr(err)
+	case 400:
+		_, err := connection.Write([]byte("HTTP/1.1 400 BAD REQUEST\n\n" + message))
 		checkErr(err)
 	}
 }
